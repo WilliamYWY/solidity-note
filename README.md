@@ -171,21 +171,116 @@ function getInfo() public view returns(string memory, string memory, uint){
     return (cust1.name, cust1.Add, cust1.Age)
 }
 ```
-Also if you want your variable have restricted option, you can use enum to define the set of option.
+Also if you want your variable have only restricted option, you can use enum to define the set of option.
 ```solidity
-enum shirtsize{SMALL, MEDIUM, LARAGE}
+enum shirtsize{SMALL, MEDIUM, LARAGE} //option set. 
+
 shirtsize constant defaultSize = shirtsize.MEDIUM;
-shirtsize public custsize = defaultSize;
+shirtsize public custsize = defaultSize;  
   
 function pickShirtSmall() public{
     custsize = shirtsize.SMALL;
 }
 ```
+- ### Inheritance 
+Contract can be inherited from each other, which "**child**" can have thier "**ancestor's**" functions, variables and constructors.
+First let's create the parent.
+```solidity
+contract shape{
+    uint height;
+    uint width;
+      
+    constructor(uint _height, uint _width) public{
+        height = _height;
+        width = _width;
+    }
+    
+    function area() internal view returns(uint){
+        return height * width;
+    }
+}
+```
+Then we create child that inherite the contract "**shape**".
+```solidity
+contract square is shape{ //square inherite shape
+
+    constructor(uint _h, uint _w) shape(_h, _w){} //passed the parameters
+
+    function getArea() public view returns(uint){ //call the function defined at parent
+        return area();
+    }
+}
+
+```
+In the shape contract, we define two variables to store height and width, a consructor to initialize them and a function to return the area.  
+Then we create a contract called squre and declared it as a child of contract shape.  
+So when we deploy the contract square and pass the initial value to the constructor in squre, the value will be passed to its parent.  
+By doing this, now square have two features: height and width.  
+Further, we can call the function "**area**" that define in contract shape.
+>Note: Notice that we define function area() as internal, so we can not use that function via sending request, but rather can only be called inside the contract itself or its children.
+
+- ### Transfer eth
+Trx can be made by building functions that are "**payable**".
+Provide the address you want to send to and the amount of eth you want to send.
+You can transfer eth via:
+- transfer
+- send
+- call
+```solidity
+contract TRX{
+    //msg.value is the amount of eth you send
+    //target is the address that received eth
+    // transfer
+    function transferETH(address payable _target) public payable{
+        _target.transfer(msg.value);
+    }
+    //send
+    function sendETH(address payable _target) public payable{
+        sent = _target.send(msg.value); //return bool value
+        require(sent, "FAIL")
+    }
+    //call
+    function callETH(address payable _target) public payable{
+        (bool sent, memory data) = _target.call{value: msg.value}("");
+        require(sent, "FAIL")
+    }
+}
+```
+These above three function allow you to transfer eth to the provided address.  
+If you want to transfer eth to contract, you'll need to ensure that the contract have a "**fallback**" function.  
+Let's take a look.  
+```solidity
+contract TRX{
+
+    //this allow the TRX contract to receive eth
+    fallback() external payable{} 
+
+    //msg.value is the amount of eth you send
+    //target is the address that received eth
+    // transfer
+    function transferETH(address payable _target) public payable{
+        _target.transfer(msg.value);
+    }
+    //send
+    function sendETH(address payable _target) public payable{
+        sent = _target.send(msg.value); //return bool value
+        require(sent, "FAIL");
+    }
+    //call
+    function callETH(address payable _target) public payable{
+        (bool sent, memory data) = _target.call{value: msg.value}("");
+        require(sent, "FAIL");
+    }
+    function getBalance() public view returns(uint){
+        return address(this).balance; //address(this) will return the address of this contract
+    }
+}
+
+```
+By inputing the target address as contract TRX's address, the contract will receive eth.
 
 ## To do List
-- inheritance 
 - example
-- transaction
 - event
 
 
